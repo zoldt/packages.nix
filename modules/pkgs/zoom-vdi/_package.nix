@@ -1,20 +1,31 @@
-{pkgs}: let
-  inherit (pkgs) lib;
-  unpacked = pkgs.stdenvNoCC.mkDerivation {
+{
+  lib,
+  stdenv,
+  stdenvNoCC,
+  requireFile,
+  dpkg,
+  buildFHSEnv,
+  autoPatchelfHook,
+  glib,
+  libx11,
+  libxext,
+  libxcb,
+}: let
+  unpacked = stdenvNoCC.mkDerivation {
     pname = "zoom-vdi-unpacked";
     version = "7.0.13.27170";
-    src = pkgs.requireFile {
+    src = requireFile {
       name = "zoomvdi-universal-plugin-ubuntu_7.0.13.deb";
       sha256 = "03b10hi4l8cai4w1nqparkr9n7y0h1rsnasaw6hxiqyv5kk6hjma";
       message = "Download zoomvdi-universal-plugin-ubuntu_7.0.13.deb from Zoom, then run nix-prefetch-url on the local file:// URL.";
     };
-    nativeBuildInputs = [pkgs.dpkg];
+    nativeBuildInputs = [dpkg];
     dontUnpack = true;
     dontFixup = true;
     installPhase = ''dpkg-deb -x "$src" "$out"'';
   };
   # Like nixpkgs' Zoom package, keep the vendor Qt bundle inside an FHS runtime.
-  runtime = pkgs.buildFHSEnv {
+  runtime = buildFHSEnv {
     name = "zoom-vdi";
     targetPkgs = p:
       with p; [
@@ -69,12 +80,12 @@
     runScript = "/usr/lib/zoomvdi-universal-plugin/zoom";
   };
 in
-  pkgs.stdenv.mkDerivation {
+  stdenv.mkDerivation {
     pname = "zoom-vdi-universal-plugin";
     inherit (unpacked) version;
     dontUnpack = true;
-    nativeBuildInputs = [pkgs.autoPatchelfHook];
-    buildInputs = [pkgs.glib pkgs.libx11 pkgs.libxext pkgs.libxcb pkgs.stdenv.cc.cc.lib];
+    nativeBuildInputs = [autoPatchelfHook];
+    buildInputs = [glib libx11 libxext libxcb stdenv.cc.cc.lib];
     installPhase = ''
       mkdir -p "$out/lib" "$out/etc/zoomvdi"
       cp ${unpacked}/usr/lib/zoomvdi-universal-plugin/libZoomPlugin.so "$out/lib/"

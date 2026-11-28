@@ -1,4 +1,4 @@
 {
-  # Zoom's VDI plugin, for the Citrix Workspace client below.
-  overlayPackages.zoom-vdi = final: import ./_package.nix {pkgs = final;};
+  # Zoom's VDI plugin, linked into citrix-workspace-vdi.
+  overlayPackages.zoom-vdi = final: final.callPackage ./_package.nix {};
 }

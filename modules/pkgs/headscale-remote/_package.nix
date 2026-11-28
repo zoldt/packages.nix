@@ -1,11 +1,15 @@
-# Expose Heimdall's headscale CLI and completions over SSH. Privileged
-# commands require an explicit local sudo, which is forwarded to Heimdall.
+# Expose a remote headscale CLI and its completions over SSH. Privileged
+# commands require an explicit local sudo, which is forwarded to the server.
+# Set the server with `pkgs.headscale-remote.override {sshDestination = "user@host";}`.
 {
   lib,
   pkgs,
+  sshDestination ? throw "headscale-remote: set sshDestination with .override",
 }:
 pkgs.runCommandLocal "headscale-remote" {
   nativeBuildInputs = [pkgs.installShellFiles];
+  # Needs sshDestination, so it is not built as-is.
+  meta.hydraPlatforms = [];
 } ''
   mkdir -p $out/bin
   cat > $out/bin/headscale <<'EOF'
@@ -39,7 +43,7 @@ pkgs.runCommandLocal "headscale-remote" {
   for arg in "$@"; do
     cmd="$cmd $(printf '%q' "$arg")"
   done
-  exec "''${ssh[@]}" trent@hs.trkm.io "$cmd"
+  exec "''${ssh[@]}" ${lib.escapeShellArg sshDestination} "$cmd"
   EOF
   chmod +x $out/bin/headscale
 
